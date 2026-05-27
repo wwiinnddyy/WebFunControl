@@ -16,5 +16,5 @@ public static class AppVersion
 
     public static string AppName => "WebFunControl";
     public static string Description => "W66D 风扇智能控制面板";
-    public static string ProjectUrl => "https://github.com/nicennnnnnnlee/WebFunControl";
+    public static string ProjectUrl => "https://github.com/wwiinnddyy/WebFunControl";
 }
