@@ -1,0 +1,11 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:WebFunControl.ViewModels"
+             x:Class="WebFunControl.Views.MainView"
+             x:DataType="vm:MainViewModel">
+
+    <ScrollViewer>
+        <StackPanel Margin="16" Spacing="4" x:Name="RootPanel" />
+    </ScrollViewer>
+
+</UserControl>

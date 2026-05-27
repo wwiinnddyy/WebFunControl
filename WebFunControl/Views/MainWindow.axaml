@@ -1,0 +1,15 @@
+<fw:FAAppWindow xmlns="https://github.com/avaloniaui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:vm="using:WebFunControl.ViewModels"
+                xmlns:v="using:WebFunControl.Views"
+                xmlns:fw="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
+                x:Class="WebFunControl.Views.MainWindow"
+                x:DataType="vm:MainViewModel"
+                Title="WebFunControl - W66D 风扇控制"
+                Width="520" Height="900"
+                MinWidth="400" MinHeight="700"
+                WindowStartupLocation="CenterScreen">
+
+    <v:MainView />
+
+</fw:FAAppWindow>

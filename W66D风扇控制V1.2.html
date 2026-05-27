@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>W66D 风扇控制</title>
+<style>
+:root {
+    --primary-color: #667eea;
+    --primary-dark: #764ba2;
+    --success-color: #00b894;
+    --danger-color: #ff6b6b;
+    --warning-color: #fdcb6e;
+    --secondary-color: #6c757d;
+    --gray-light: #adb5bd;
+    --bg-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    --card-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    --border-radius: 16px;
+    --border-radius-sm: 12px;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    color: #333;
+    padding: 10px;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding-bottom: 20px;
+}
+
+/* 头部样式 */
+.header {
+    text-align: center;
+    color: white;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: var(--border-radius);
+    backdrop-filter: blur(10px);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.header p {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-size: 13px;
+}
+
+/* 卡片样式 */
+.card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 15px;
+    margin-bottom: 12px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+}
+
+.card h3 {
+    margin: 0 0 12px 0;
+    color: #333;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.card h3::before {
+    content: "";
+    width: 4px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 2px;
+    margin-right: 8px;
+}
+
+/* 按钮基础样式 */
+.btn {
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    touch-action: manipulation;
+    white-space: nowrap;
+}
+
+.btn:active {
+    transform: scale(0.96);
+}
+
+/* 按钮颜色变体 */
+.btn-primary { background: var(--bg-gradient); color: white; }
+.btn-danger { background: linear-gradient(135deg, var(--danger-color) 0%, #ee5a24 100%); color: white; }
+.btn-success { background: linear-gradient(135deg, var(--success-color) 0%, #00a085 100%); color: white; }
+.btn-warning { background: linear-gradient(135deg, var(--warning-color) 0%, #e17055 100%); color: white; }
+.btn-secondary { background: var(--secondary-color); color: white; }
+.btn-off { background: var(--gray-light); color: white; }
+.btn-on { background: linear-gradient(135deg, var(--success-color) 0%, #00a085 100%); color: white; }
+
+/* 按钮行布局 */
+.button-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.button-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* 档位控制按钮 - 更紧凑 */
+.speed-controls .button-row button {
+    flex-shrink: 0;
+    min-width: 56px;
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+/* 自然风按钮 */
+.natural-wind .button-row {
+    flex-wrap: wrap;
+}
+
+.natural-wind .button-row button {
+    flex-shrink: 0;
+    min-width: 65px;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+/* 连接按钮 */
+.connect-btn {
+    width: 100%;
+    margin-bottom: 8px;
+    font-size: 16px;
+    padding: 14px;
+    border-radius: 12px;
+}
+
+/* 输入组 - 优化百分比显示 */
+.input-group {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.input-group label {
+    min-width: 80px;
+    font-size: 14px;
+    color: #555;
+    flex-shrink: 0;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.input-wrapper input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px 0 0 10px;
+    font-size: 15px;
+    background: #f8f9fa;
+    transition: border-color 0.2s;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: white;
+}
+
+.percent-sign {
+    padding: 10px 12px;
+    background: #e9ecef;
+    border: 2px solid #e9ecef;
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+    flex-shrink: 0;
+}
+
+/* 状态显示 */
+.status {
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.status-connected {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-disconnected {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* 信息显示 */
+.info-display {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    text-align: center;
+    font-size: 14px;
+    color: #555;
+    border-left: 4px solid var(--primary-color);
+    word-break: break-word;
+}
+
+/* 转速控制样式 - 恢复流畅手感 */
+.speed-control-card {
+    margin-top: 12px;
+}
+
+.speed-slider-container {
+    margin: 15px 0;
+}
+
+.speed-slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.speed-slider-label span {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+.speed-value {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.speed-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.speed-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+    transition: transform 0.1s ease;
+    border: 2px solid white;
+}
+
+.speed-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.speed-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+}
+
+.speed-input-group {
+    display: flex;
+    align-items: center;
+    margin: 12px 0;
+    gap: 8px;
+}
+
+.speed-input-group label {
+    min-width: 70px;
+    font-size: 14px;
+    color: #555;
+}
+
+.speed-input-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.speed-input-wrapper input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px 0 0 10px;
+    font-size: 15px;
+    background: #f8f9fa;
+    transition: border-color 0.2s;
+}
+
+.speed-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: white;
+}
+
+.speed-unit {
+    padding: 10px 12px;
+    background: #e9ecef;
+    border: 2px solid #e9ecef;
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+}
+
+.speed-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.speed-buttons button {
+    flex: 1;
+}
+
+/* 警告样式 */
+.warning-text {
+    color: var(--danger-color);
+    font-size: 13px;
+    margin-top: 5px;
+    display: none;
+}
+
+/* 自然风曲线编辑器样式 */
+.curve-editor {
+    margin-top: 12px;
+}
+
+.curve-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 8px 0;
+    font-size: 12px;
+    color: #666;
+    border-left: 4px solid var(--success-color);
+}
+
+.curve-textarea {
+    width: 100%;
+    height: 70px;
+    padding: 10px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 11px;
+    resize: vertical;
+    background: #f8f9fa;
+    transition: border-color 0.2s;
+    margin-bottom: 8px;
+}
+
+.curve-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: white;
+}
+
+/* 曲线图表样式 */
+.curve-chart-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1px solid #e9ecef;
+    position: relative;
+}
+
+.curve-chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.curve-canvas {
+    width: 100%;
+    height: 120px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    cursor: grab;
+    touch-action: none;
+}
+
+.curve-canvas.dragging {
+    cursor: grabbing;
+}
+
+.curve-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #666;
+}
+
+/* 修复按钮宽度 */
+.curve-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.curve-buttons button {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px 6px;
+}
+
+/* 编辑提示 */
+.edit-hint {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(102, 126, 234, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* 自定义定时区域样式 */
+.timer-with-presets {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.timer-input-group {
+    flex: 1;
+}
+
+.preset-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.preset-buttons button {
+    min-width: 55px;
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+/* 复选框样式 */
+.checkbox-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+}
+
+.checkbox-item label {
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+}
+
+/* 实时状态栏样式 - 优化手机显示 */
+.real-time-status {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: #e9f7fe;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 15px 0;
+    border: 1px solid #bee5eb;
+}
+
+.status-item {
+    text-align: center;
+    padding: 8px 4px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    min-width: 0;
+}
+
+.status-label {
+    font-size: 11px;
+    color: #6c757d;
+    margin-bottom: 2px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.status-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #007bff;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 响应式调整 */
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+    
+    .container {
+        padding-bottom: 15px;
+    }
+    
+    .card {
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 12px;
+    }
+    
+    .button-row {
+        gap: 4px;
+    }
+    
+    .speed-controls .button-row button {
+        min-width: 50px;
+        padding: 8px;
+        font-size: 12px;
+    }
+    
+    .natural-wind .button-row button {
+        min-width: 60px;
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+    
+    .input-group {
+        gap: 6px;
+    }
+    
+    .input-group label {
+        min-width: 65px;
+        font-size: 13px;
+    }
+    
+    .input-wrapper input {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+    
+    .percent-sign {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .speed-buttons {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .speed-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    
+    .speed-input-group label {
+        min-width: auto;
+    }
+    
+    /* 手机端按钮垂直排列 */
+    .curve-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    /* 修复定时区域在手机上的布局 */
+    .timer-with-presets {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .preset-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    
+    .preset-buttons button {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .checkbox-group {
+        gap: 10px;
+    }
+    
+    /* 实时状态栏响应式 - 保持三列但更小 */
+    .real-time-status {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        padding: 10px;
+    }
+    
+    .status-item {
+        padding: 6px 2px;
+    }
+    
+    .status-label {
+        font-size: 10px;
+    }
+    
+    .status-value {
+        font-size: 14px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <!-- 头部 -->
+    <div class="header">
+        <h1>🌬️ W66D 风扇控制</h1>
+        <p>蓝牙智能控制面板</p>
+    </div>
+    
+    <!-- 连接控制 -->
+    <div class="card">
+        <h3>🔗 连接设备</h3>
+        <button class="btn btn-primary connect-btn" onclick="connect()">
+            📶 连接风扇
+        </button>
+        <button class="btn btn-warning connect-btn" onclick="disconnect()">
+            🔌 断开连接
+        </button>
+        <div id="status" class="status status-disconnected">
+            ❌ 未连接
+        </div>
+    </div>
+    
+    <!-- 实时状态栏 - 优化显示 -->
+    <div class="card">
+        <h3>📊 实时状态</h3>
+        <div class="real-time-status">
+            <div class="status-item">
+                <div class="status-label">转速</div>
+                <div class="status-value" id="fanSpeedValue">-- %</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">系统电压</div>
+                <div class="status-value" id="voltageValue">-- V</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">电池电压</div>
+                <div class="status-value" id="batteryVoltageValue">-- V</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">电流</div>
+                <div class="status-value" id="currentValue">-- A</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">功率</div>
+                <div class="status-value" id="powerValue">-- W</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 档位控制 -->
+    <div class="card speed-controls">
+        <h3>💨 档位控制</h3>
+        <div class="button-row">
+            <button class="btn btn-danger" onclick="safeWrite('POWER', '00')">关机</button>
+            <button class="btn btn-primary" onclick="safeWrite('POWER', '01')">1档</button>
+            <button class="btn btn-primary" onclick="safeWrite('POWER', '02')">2档</button>
+            <button class="btn btn-primary" onclick="safeWrite('POWER', '03')">3档</button>
+            <button class="btn btn-primary" onclick="safeWrite('POWER', '04')">4档</button>
+        </div>
+    </div>
+    
+    <!-- 转速控制 - 恢复流畅手感 -->
+    <div class="card speed-control-card">
+        <h3>🌀 转速控制</h3>
+        
+        <!-- 滑动条 - 恢复流畅手感 -->
+        <div class="speed-slider-container">
+            <div class="speed-slider-label">
+                <span>当前转速:</span>
+                <div class="speed-value" id="currentSpeedValue">50%</div>
+            </div>
+            <input type="range" min="0" max="100" value="50" step="1" class="speed-slider" id="speedSlider" oninput="onSpeedSliderChange(this.value)">
+            <div class="speed-slider-label">
+                <span>0%</span>
+                <span>100%</span>
+            </div>
+        </div>
+        
+        <!-- 输入框输入转速 -->
+        <div class="speed-input-group">
+            <label>输入转速:</label>
+            <div class="speed-input-wrapper">
+                <input type="number" id="manualSpeedInput" min="0" max="100" value="50" placeholder="0-100">
+                <span class="speed-unit">%</span>
+            </div>
+        </div>
+        
+        <!-- 按钮 -->
+        <div class="speed-buttons">
+            <button class="btn btn-primary" onclick="applySpeedFromInput()">应用转速</button>
+            <button class="btn btn-secondary" onclick="resetSpeed()">重置默认(50%)</button>
+        </div>
+    </div>
+    
+    <!-- 自定义定时 - 已移到自然风控制上方 -->
+    <div class="card">
+        <h3>⏱️ 自定义定时</h3>
+        <div class="timer-with-presets">
+            <div class="timer-input-group">
+                <div class="input-group">
+                    <label>定时（分钟）:</label>
+                    <input type="number" id="customMinutes" min="1" max="480" value="30">
+                </div>
+            </div>
+            <div class="preset-buttons">
+                <button class="btn btn-primary" onclick="safeWrite('TIMER', '0E10')">1小时</button>
+                <button class="btn btn-primary" onclick="safeWrite('TIMER', '3840')">4小时</button>
+            </div>
+        </div>
+        <div class="button-row">
+            <button class="btn btn-success" onclick="setCustomTimer()">设置定时</button>
+            <button class="btn btn-danger" onclick="cancelTimer()">取消定时</button>
+            <button class="btn btn-secondary" onclick="readRemainingTime()">读取剩余</button>
+        </div>
+        <div class="info-display" id="remainingTimeDisplay">
+            剩余时间: 未设置
+        </div>
+    </div>
+    
+    <!-- 自然风控制 -->
+    <div class="card natural-wind">
+        <h3>🌬️ 自然风</h3>
+        <div class="button-row">
+            <button id="nwBtn" class="btn btn-off" onclick="toggleNW()">自然风 OFF</button>
+            <button class="btn btn-warning" onclick="generateRandomCurve()">
+                🎲 随机生成曲线
+            </button>
+        </div>
+        
+        <!-- 模式选择复选框 -->
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" id="smoothMode" checked>
+                <label for="smoothMode">平滑</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="quietMode">
+                <label for="quietMode">安静</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="strongMode">
+                <label for="strongMode">强劲</label>
+            </div>
+        </div>
+        
+        <!-- 自然风曲线编辑器 -->
+        <div class="curve-editor">
+            <div class="curve-info">
+                <strong>自然风曲线编辑器（十进制）</strong><br>
+                共128个数据点（20-90），每个值代表风速强度。<br>
+                <strong>直接拖动曲线上的点即可调整！</strong>
+            </div>
+            
+            <!-- 曲线图表 -->
+            <div class="curve-chart-container">
+                <div class="edit-hint">拖动曲线上的点进行调整</div>
+                <div class="curve-chart-title">自然风曲线可视化</div>
+                <canvas id="curveCanvas" class="curve-canvas" width="400" height="120"></canvas>
+                <div class="curve-stats">
+                    <span>最小值: <span id="minValue">20</span></span>
+                    <span>最大值: <span id="maxValue">90</span></span>
+                    <span>平均值: <span id="avgValue">45</span></span>
+                </div>
+            </div>
+            
+            <!-- 曲线数据编辑 - 修改时不检测，提交时检测 -->
+            <textarea id="curveData" class="curve-textarea" placeholder="自然风曲线数据（十进制，空格分隔，范围20-90）" oninput="updateCurveFromText()"></textarea>
+            
+            <div class="curve-buttons">
+                <button class="btn btn-success" onclick="applyEditedCurve()">
+                    🌊 应用编辑的曲线
+                </button>
+                <button class="btn btn-warning" onclick="restoreDefaultCurve()">
+                    🔄 还原默认曲线
+                </button>
+                <button class="btn btn-secondary" onclick="readNatureWindCurve()">
+                    📖 读取自然风曲线
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 档位风速设置 -->
+    <div class="card">
+        <h3>🎛️ 档位风速设置</h3>
+        <div class="input-group">
+            <label>1档风速:</label>
+            <div class="input-wrapper">
+                <input type="number" id="speed1" min="0" max="100" value="30" onblur="validateSpeed(this)">
+                <span class="percent-sign">%</span>
+            </div>
+            <div class="warning-text" id="warning1">⚠️ 风速不能小于20%</div>
+        </div>
+        <div class="input-group">
+            <label>2档风速:</label>
+            <div class="input-wrapper">
+                <input type="number" id="speed2" min="0" max="100" value="50" onblur="validateSpeed(this)">
+                <span class="percent-sign">%</span>
+            </div>
+            <div class="warning-text" id="warning2">⚠️ 风速不能小于20%</div>
+        </div>
+        <div class="input-group">
+            <label>3档风速:</label>
+            <div class="input-wrapper">
+                <input type="number" id="speed3" min="0" max="100" value="70" onblur="validateSpeed(this)">
+                <span class="percent-sign">%</span>
+            </div>
+            <div class="warning-text" id="warning3">⚠️ 风速不能小于20%</div>
+        </div>
+        <div class="input-group">
+            <label>4档风速:</label>
+            <div class="input-wrapper">
+                <input type="number" id="speed4" min="0" max="100" value="100" onblur="validateSpeed(this)">
+                <span class="percent-sign">%</span>
+            </div>
+            <div class="warning-text" id="warning4">⚠️ 风速不能小于20%</div>
+        </div>
+        <div class="button-row">
+            <button class="btn btn-primary" onclick="setCustomSpeeds()">应用设置</button>
+            <button class="btn btn-secondary" onclick="resetToDefault()">恢复默认</button>
+            <button class="btn btn-success" onclick="readCurrentSpeeds()">读取当前</button>
+        </div>
+        <div class="info-display" id="currentSpeedsDisplay">
+            当前设定: 未读取
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== 配置常量 ====================
+const CONFIG = {
+    // 主服务UUID（用于档位、定时、转速等）
+    MAIN_SERVICE_UUID: "0000fff0-0000-1000-8000-00805f9b34fb",
+    // FFD0服务UUID（用于电压、电流等）
+    FFD0_SERVICE_UUID: "0000ffd0-0000-1000-8000-00805f9b34fb",
+    // 自然风曲线服务UUID
+    NATURE_WIND_SERVICE_UUID: "0000ffe0-0000-1000-8000-00805f9b34fb",
+    CHARACTERISTICS: {
+        POWER: "0000fff1-0000-1000-8000-00805f9b34fb",      // 档位
+        TIMER: "0000fff2-0000-1000-8000-00805f9b34fb",      // 定时
+        NATURE_WIND: "0000fff4-0000-1000-8000-00805f9b34fb", // 自然风开关
+        NATURE_WIND_CURVE: "0000ffe3-0000-1000-8000-00805f9b34fb", // 自然风曲线
+        SPEED_CALIB: "0000fff7-0000-1000-8000-00805f9b34fb", // 档位风速标定
+        FAN_SPEED: "0000fff3-0000-1000-8000-00805f9b34fb",   // 风扇转速
+        VOLTAGE: "0000ffd2-0000-1000-8000-00805f9b34fb",     // 系统电压
+        BATTERY_VOLTAGE: "0000ffd1-0000-1000-8000-00805f9b34fb", // 电池电压（电芯电压）
+        CURRENT: "0000ffd3-0000-1000-8000-00805f9b34fb"      // 电流
+    },
+    DEFAULT_SPEEDS: [30, 50, 70, 100],
+    DEFAULT_FAN_SPEED: 50,
+    MIN_SPEED_LIMIT: 20, // 最小风速限制
+    MAX_SPEED_LIMIT: 90, // 最大风速限制
+    TIMER_VALUES: {
+        ONE_HOUR: "0E10",  // 3600秒
+        FOUR_HOURS: "3840" // 14400秒
+    },
+    // 确认128个数据点的自然风曲线数据（调整到20-90范围）
+    DEFAULT_NATURE_WIND_CURVE_DECIMAL: "55 48 40 33 28 22 21 26 33 41 48 54 58 60 61 58 52 45 37 30 24 20 25 33 40 48 53 57 60 60 56 51 43 36 29 23 21 28 37 47 56 63 68 71 72 71 67 62 54 46 36 29 23 20 27 37 48 57 64 69 73 74 76 78 80 82 84 86 88 90 89 87 83 77 70 62 53 43 34 27 21 20 26 32 38 43 47 49 50 48 44 38 33 27 24 20 21 26 31 37 42 46 48 47 42 36 31 27 23 20 22 27 33 39 44 47 48 46 41 36 30 26 23 20 22 27 33 38"
+};
+
+// ==================== 全局变量 ====================
+let state = {
+    device: null,
+    mainService: null,      // 主服务（fff0）
+    ffd0Service: null,      // FFD0服务（用于电压、电流）
+    natureWindService: null, // 自然风服务
+    naturalWindOn: false,
+    disconnectListener: null,
+    currentFanSpeed: CONFIG.DEFAULT_FAN_SPEED,
+    curveData: [], // 存储当前曲线数据（十进制）
+    selectedPointIndex: -1, // 当前选中的数据点索引
+    isDragging: false, // 是否正在拖拽
+    dragStartY: 0, // 拖拽起始Y坐标
+    dragStartValue: 0, // 拖拽起始值
+    refreshInterval: null, // 实时状态刷新定时器
+    lastBatteryVoltage: 0, // 上次电池电压
+    lastCurrentRaw: 0, // 上次原始电流值
+    currentCalibrationFactor: 0.63, // 电流校准系数（根据实测数据调整）
+    animationFrameId: null // 动画帧ID，用于优化性能
+};
+
+// ==================== DOM元素引用 ====================
+const elements = {
+    status: document.getElementById('status'),
+    nwBtn: document.getElementById('nwBtn'),
+    remainingTime: document.getElementById('remainingTimeDisplay'),
+    currentSpeeds: document.getElementById('currentSpeedsDisplay'),
+    customMinutes: document.getElementById('customMinutes'),
+    speedInputs: [
+        document.getElementById('speed1'),
+        document.getElementById('speed2'),
+        document.getElementById('speed3'),
+        document.getElementById('speed4')
+    ],
+    speedSlider: document.getElementById('speedSlider'),
+    currentSpeedValue: document.getElementById('currentSpeedValue'),
+    manualSpeedInput: document.getElementById('manualSpeedInput'),
+    curveData: document.getElementById('curveData'),
+    curveCanvas: document.getElementById('curveCanvas'),
+    minValue: document.getElementById('minValue'),
+    maxValue: document.getElementById('maxValue'),
+    avgValue: document.getElementById('avgValue'),
+    smoothMode: document.getElementById('smoothMode'),
+    quietMode: document.getElementById('quietMode'),
+    strongMode: document.getElementById('strongMode'),
+    warnings: [
+        document.getElementById('warning1'),
+        document.getElementById('warning2'),
+        document.getElementById('warning3'),
+        document.getElementById('warning4')
+    ],
+    // 实时状态元素
+    fanSpeedValue: document.getElementById('fanSpeedValue'),
+    voltageValue: document.getElementById('voltageValue'),
+    batteryVoltageValue: document.getElementById('batteryVoltageValue'),
+    currentValue: document.getElementById('currentValue'),
+    powerValue: document.getElementById('powerValue')
+};
+
+// ==================== 工具函数 ====================
+function decimalToHex(decimal) {
+    return parseInt(decimal).toString(16).padStart(2, '0').toUpperCase();
+}
+
+function hexToDecimal(hex) {
+    return parseInt(hex, 16);
+}
+
+function decimalArrayToHexString(decimalArray) {
+    return decimalArray.map(d => decimalToHex(d)).join('');
+}
+
+// 大端读取16位无符号整数
+function readUInt16BE(dataView, offset) {
+    return dataView.getUint16(offset, false); // false表示大端
+}
+
+// 大端读取32位无符号整数
+function readUInt32BE(dataView, offset) {
+    return dataView.getUint32(offset, false); // false表示大端
+}
+
+// 校准电流值（使用固定的0.63系数）
+function calibrateCurrent(rawValue) {
+    // 使用固定的0.63系数进行校准
+    return rawValue * state.currentCalibrationFactor / 1000; // 转换为安培
+}
+
+// ==================== 蓝牙连接管理 ====================
+async function connect() {
+    try {
+        // 清理现有连接
+        await forceDisconnect();
+        
+        state.device = await navigator.bluetooth.requestDevice({
+            filters: [{ name: "W66D" }],
+            optionalServices: [CONFIG.MAIN_SERVICE_UUID, CONFIG.FFD0_SERVICE_UUID, CONFIG.NATURE_WIND_SERVICE_UUID]
+        });
+
+        // 设置断开连接监听
+        state.disconnectListener = () => onDisconnected();
+        state.device.addEventListener('gattserverdisconnected', state.disconnectListener);
+
+        const server = await state.device.gatt.connect();
+        
+        // 获取主服务（fff0）
+        state.mainService = await server.getPrimaryService(CONFIG.MAIN_SERVICE_UUID);
+        
+        // 获取FFD0服务（用于电压、电流）
+        try {
+            state.ffd0Service = await server.getPrimaryService(CONFIG.FFD0_SERVICE_UUID);
+            console.log("FFD0服务获取成功");
+        } catch (error) {
+            console.warn("无法获取FFD0服务:", error);
+        }
+        
+        // 获取自然风服务
+        try {
+            state.natureWindService = await server.getPrimaryService(CONFIG.NATURE_WIND_SERVICE_UUID);
+        } catch (error) {
+            console.warn("无法获取自然风服务:", error);
+        }
+        
+        updateConnectionStatus(true);
+        
+        // 读取初始状态
+        await Promise.all([readRemainingTime(), readCurrentSpeeds()]);
+        
+        // 启动实时状态刷新（每秒刷新一次）
+        startRealTimeRefresh();
+        
+    } catch (error) {
+        console.error("连接失败:", error);
+        await forceDisconnect();
+    }
+}
+
+function onDisconnected() {
+    updateConnectionStatus(false);
+    cleanupResources();
+    stopRealTimeRefresh(); // 停止实时状态刷新
+}
+
+async function disconnect() {
+    if (state.device && state.device.gatt.connected) {
+        try {
+            state.device.gatt.disconnect();
+        } catch (error) {
+            await forceDisconnect();
+        }
+    } else {
+        await forceDisconnect();
+    }
+}
+
+async function forceDisconnect() {
+    if (state.device) {
+        try {
+            if (state.device.gatt.connected) {
+                state.device.gatt.disconnect();
+            }
+            if (state.disconnectListener) {
+                state.device.removeEventListener('gattserverdisconnected', state.disconnectListener);
+            }
+        } catch (error) {
+            // 忽略错误
+        }
+    }
+    cleanupResources();
+    stopRealTimeRefresh(); // 停止实时状态刷新
+}
+
+function cleanupResources() {
+    if (state.device && state.disconnectListener) {
+        state.device.removeEventListener('gattserverdisconnected', state.disconnectListener);
+    }
+    state.device = null;
+    state.mainService = null;
+    state.ffd0Service = null;
+    state.natureWindService = null;
+    state.disconnectListener = null;
+    updateConnectionStatus(false);
+}
+
+function updateConnectionStatus(isConnected) {
+    elements.status.textContent = isConnected ? "✅ 已连接" : "❌ 未连接";
+    elements.status.className = isConnected ? "status status-connected" : "status status-disconnected";
+}
+
+// ==================== 实时状态刷新 - 优化性能 ====================
+function startRealTimeRefresh() {
+    // 立即刷新一次
+    refreshRealTimeStatus();
+    
+    // 每秒刷新一次
+    state.refreshInterval = setInterval(refreshRealTimeStatus, 1000);
+}
+
+function stopRealTimeRefresh() {
+    if (state.refreshInterval) {
+        clearInterval(state.refreshInterval);
+        state.refreshInterval = null;
+    }
+    
+    if (state.animationFrameId) {
+        cancelAnimationFrame(state.animationFrameId);
+        state.animationFrameId = null;
+    }
+    
+    // 清空显示
+    elements.fanSpeedValue.textContent = "-- %";
+    elements.voltageValue.textContent = "-- V";
+    elements.batteryVoltageValue.textContent = "-- V";
+    elements.currentValue.textContent = "-- A";
+    elements.powerValue.textContent = "-- W";
+}
+
+// 使用requestAnimationFrame优化UI更新
+function refreshRealTimeStatus() {
+    if (!state.device || !state.device.gatt.connected) return;
+    
+    // 使用requestAnimationFrame避免阻塞UI
+    if (state.animationFrameId) {
+        cancelAnimationFrame(state.animationFrameId);
+    }
+    
+    state.animationFrameId = requestAnimationFrame(async () => {
+        try {
+            // 读取风扇转速（0-100百分比）
+            try {
+                if (state.mainService) {
+                    const speedChar = await state.mainService.getCharacteristic(CONFIG.CHARACTERISTICS.FAN_SPEED);
+                    const speedValue = await speedChar.readValue();
+                    const speed = speedValue.getUint8(0); // 直接读取0-100的百分比
+                    elements.fanSpeedValue.textContent = `${speed} %`;
+                }
+            } catch (error) {
+                elements.fanSpeedValue.textContent = "-- %";
+            }
+            
+            // 读取系统电压（大端，从FFD0服务的FFD2特征读取）
+            try {
+                if (state.ffd0Service) {
+                    const voltageChar = await state.ffd0Service.getCharacteristic(CONFIG.CHARACTERISTICS.VOLTAGE);
+                    const voltageValue = await voltageChar.readValue();
+                    const dataView = new DataView(voltageValue.buffer);
+                    // 电压值在大端模式下位于第2和第3个字节（索引2和3）
+                    const voltageRaw = readUInt16BE(dataView, 2); // 大端读取16位
+                    const voltage = (voltageRaw / 1000).toFixed(2); // 转换为伏特
+                    elements.voltageValue.textContent = `${voltage} V`;
+                } else {
+                    elements.voltageValue.textContent = "-- V";
+                }
+            } catch (error) {
+                elements.voltageValue.textContent = "-- V";
+            }
+            
+            // 读取电池电压（大端，从FFD0服务的FFD1特征读取）
+            try {
+                if (state.ffd0Service) {
+                    const batteryVoltageChar = await state.ffd0Service.getCharacteristic(CONFIG.CHARACTERISTICS.BATTERY_VOLTAGE);
+                    const batteryVoltageValue = await batteryVoltageChar.readValue();
+                    const dataView = new DataView(batteryVoltageValue.buffer);
+                    // 电池电压值在大端模式下位于前2个字节（索引0和1）
+                    const batteryVoltageRaw = readUInt16BE(dataView, 0); // 大端读取16位
+                    const batteryVoltage = (batteryVoltageRaw / 1000).toFixed(2); // 转换为伏特
+                    elements.batteryVoltageValue.textContent = `${batteryVoltage} V`;
+                    state.lastBatteryVoltage = batteryVoltage;
+                } else {
+                    elements.batteryVoltageValue.textContent = "-- V";
+                }
+            } catch (error) {
+                elements.batteryVoltageValue.textContent = "-- V";
+            }
+            
+            // 读取电流（大端，从FFD0服务的FFD3特征读取）- 使用0.63系数校准
+            try {
+                if (state.ffd0Service) {
+                    const currentChar = await state.ffd0Service.getCharacteristic(CONFIG.CHARACTERISTICS.CURRENT);
+                    const currentValue = await currentChar.readValue();
+                    const dataView = new DataView(currentValue.buffer);
+                    // 电流值在大端模式下位于前2个字节（索引0和1）
+                    const currentRaw = readUInt16BE(dataView, 0); // 大端读取16位
+                    
+                    // 使用固定的0.63系数进行校准
+                    const current = calibrateCurrent(currentRaw);
+                    
+                    elements.currentValue.textContent = `${current.toFixed(2)} A`;
+                    state.lastCurrent = current;
+                } else {
+                    elements.currentValue.textContent = "-- A";
+                }
+            } catch (error) {
+                elements.currentValue.textContent = "-- A";
+            }
+            
+            // 计算并显示实时功率
+            if (state.lastBatteryVoltage > 0 && state.lastCurrent > 0) {
+                const power = (state.lastBatteryVoltage * state.lastCurrent).toFixed(2);
+                elements.powerValue.textContent = `${power} W`;
+            } else {
+                elements.powerValue.textContent = "-- W";
+            }
+        } catch (error) {
+            // 静默处理错误，保持界面稳定
+        }
+    });
+}
+
+// ==================== 蓝牙写入 ====================
+async function safeWrite(characteristicKey, hexValue) {
+    if (!state.mainService) {
+        alert("请先连接风扇！");
+        return;
+    }
+    
+    const uuid = CONFIG.CHARACTERISTICS[characteristicKey];
+    if (!uuid) {
+        return;
+    }
+
+    try {
+        const characteristic = await state.mainService.getCharacteristic(uuid);
+        const data = hexStringToBytes(hexValue);
+        
+        if (characteristic.properties.writeWithoutResponse) {
+            await characteristic.writeValueWithoutResponse(data);
+        } else if (characteristic.properties.write) {
+            await characteristic.writeValue(data);
+        }
+    } catch (error) {
+        // 静默处理错误
+    }
+}
+
+// ==================== 功能函数 ====================
+function toggleNW() {
+    state.naturalWindOn = !state.naturalWindOn;
+    safeWrite('NATURE_WIND', state.naturalWindOn ? '01' : '00');
+    
+    elements.nwBtn.textContent = state.naturalWindOn ? '自然风 ON ' : '自然风 OFF';
+    elements.nwBtn.className = state.naturalWindOn ? 'btn btn-on' : 'btn btn-off';
+}
+
+function setCustomTimer() {
+    const minutes = parseInt(elements.customMinutes.value);
+    if (isNaN(minutes) || minutes <= 0 || minutes > 480) {
+        alert("请输入1-480分钟之间的数值");
+        return;
+    }
+    
+    const seconds = minutes * 60;
+    const hexValue = seconds.toString(16).padStart(4, '0').toUpperCase();
+    
+    safeWrite('TIMER', hexValue);
+    elements.remainingTime.textContent = `剩余时间: ${minutes}分钟`;
+}
+
+function cancelTimer() {
+    safeWrite('TIMER', '0000');
+    elements.remainingTime.textContent = "剩余时间: 已取消";
+}
+
+async function readRemainingTime() {
+    if (!state.mainService) return;
+    
+    try {
+        const characteristic = await state.mainService.getCharacteristic(CONFIG.CHARACTERISTICS.TIMER);
+        const value = await characteristic.readValue();
+        const seconds = value.getUint16(0, false);
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        
+        elements.remainingTime.textContent = `剩余时间: ${minutes}分${secs}秒`;
+    } catch (error) {
+        elements.remainingTime.textContent = "剩余时间: 读取失败";
+    }
+}
+
+// ==================== 档位风速设置 - 带限制 ====================
+function validateSpeed(inputElement) {
+    const value = parseInt(inputElement.value);
+    const warningId = 'warning' + inputElement.id.replace('speed', '');
+    const warningElement = document.getElementById(warningId);
+    
+    if (isNaN(value) || value < CONFIG.MIN_SPEED_LIMIT) {
+        warningElement.style.display = 'block';
+        inputElement.style.borderColor = '#ff6b6b';
+        return false;
+    } else {
+        warningElement.style.display = 'none';
+        inputElement.style.borderColor = '#e9ecef';
+        return true;
+    }
+}
+
+function setCustomSpeeds() {
+    const speeds = elements.speedInputs.map(input => parseInt(input.value));
+    
+    // 验证输入 - 每个档位风速不能小于20%
+    for (let i = 0; i < speeds.length; i++) {
+        if (isNaN(speeds[i]) || speeds[i] < 0 || speeds[i] > 100) {
+            alert(`档位${i+1}的风速必须在0-100之间`);
+            return;
+        }
+        if (speeds[i] < CONFIG.MIN_SPEED_LIMIT) {
+            alert(`档位${i+1}的风速不能小于${CONFIG.MIN_SPEED_LIMIT}%`);
+            elements.warnings[i].style.display = 'block';
+            elements.speedInputs[i].style.borderColor = '#ff6b6b';
+            return;
+        }
+    }
+    
+    // 所有验证通过，应用设置
+    const hexValues = speeds.map(speed => 
+        speed.toString(16).padStart(2, '0').toUpperCase()
+    ).join('');
+    
+    safeWrite('SPEED_CALIB', hexValues);
+}
+
+function resetToDefault() {
+    elements.speedInputs.forEach((input, index) => {
+        input.value = CONFIG.DEFAULT_SPEEDS[index];
+        // 隐藏警告
+        elements.warnings[index].style.display = 'none';
+        input.style.borderColor = '#e9ecef';
+    });
+    setCustomSpeeds();
+}
+
+async function readCurrentSpeeds() {
+    if (!state.mainService) return;
+    
+    try {
+        const characteristic = await state.mainService.getCharacteristic(CONFIG.CHARACTERISTICS.SPEED_CALIB);
+        const value = await characteristic.readValue();
+        
+        const speeds = [];
+        for (let i = 0; i < 4 && i < value.byteLength; i++) {
+            speeds.push(value.getUint8(i));
+        }
+        
+        // 更新输入框
+        speeds.forEach((speed, index) => {
+            if (elements.speedInputs[index]) {
+                elements.speedInputs[index].value = speed;
+                // 隐藏警告
+                elements.warnings[index].style.display = 'none';
+                elements.speedInputs[index].style.borderColor = '#e9ecef';
+            }
+        });
+        
+        elements.currentSpeeds.textContent = `当前设定: ${speeds.join('% / ')}%`;
+    } catch (error) {
+        elements.currentSpeeds.textContent = "当前设定: 读取失败";
+    }
+}
+
+// ==================== 转速控制函数 - 恢复流畅手感 ====================
+function onSpeedSliderChange(value) {
+    // 确保值是整数且在0-100范围内
+    let speed = parseInt(value);
+    if (isNaN(speed)) speed = 0;
+    if (speed < 0) speed = 0;
+    if (speed > 100) speed = 100;
+    
+    state.currentFanSpeed = speed;
+    elements.currentSpeedValue.textContent = `${speed}%`;
+    elements.manualSpeedInput.value = speed;
+    
+    // 直接应用转速，不使用防抖锁
+    const hexValue = speedToHex(speed);
+    safeWrite('FAN_SPEED', hexValue);
+}
+
+function applySpeedFromInput() {
+    const inputValue = parseInt(elements.manualSpeedInput.value);
+    
+    if (isNaN(inputValue) || inputValue < 0 || inputValue > 100) {
+        alert("请输入0-100之间的数值");
+        return;
+    }
+    
+    state.currentFanSpeed = inputValue;
+    elements.currentSpeedValue.textContent = `${inputValue}%`;
+    elements.speedSlider.value = inputValue;
+    
+    // 应用转速
+    const hexValue = speedToHex(inputValue);
+    safeWrite('FAN_SPEED', hexValue);
+}
+
+function resetSpeed() {
+    state.currentFanSpeed = CONFIG.DEFAULT_FAN_SPEED;
+    elements.speedSlider.value = state.currentFanSpeed;
+    elements.currentSpeedValue.textContent = `${state.currentFanSpeed}%`;
+    elements.manualSpeedInput.value = state.currentFanSpeed;
+    
+    // 应用转速
+    const hexValue = speedToHex(state.currentFanSpeed);
+    safeWrite('FAN_SPEED', hexValue);
+}
+
+// ==================== 自然风曲线函数 ====================
+function initializeCurveEditor() {
+    // 初始化曲线数据
+    state.curveData = CONFIG.DEFAULT_NATURE_WIND_CURVE_DECIMAL.split(/\s+/).map(Number);
+    
+    // 验证数据点数量
+    if (state.curveData.length !== 128) {
+        console.error(`数据点数量错误: ${state.curveData.length}, 应为128`);
+        // 如果数量不对，尝试修复
+        if (state.curveData.length < 128) {
+            while (state.curveData.length < 128) {
+                state.curveData.push(50); // 填充默认值
+            }
+        } else {
+            state.curveData = state.curveData.slice(0, 128); // 截断
+        }
+    }
+    
+    // 确保数据在20-90范围内
+    state.curveData = state.curveData.map(value => {
+        if (value < CONFIG.MIN_SPEED_LIMIT) return CONFIG.MIN_SPEED_LIMIT;
+        if (value > CONFIG.MAX_SPEED_LIMIT) return CONFIG.MAX_SPEED_LIMIT;
+        return value;
+    });
+    
+    // 更新文本区域
+    elements.curveData.value = state.curveData.join(' ');
+    
+    // 绘制曲线
+    drawCurve();
+    
+    // 添加canvas事件监听
+    setupCanvasEvents();
+}
+
+// 改进的随机生成自然风曲线 - 根据模式选择生成不同特性的曲线
+function generateRandomCurve() {
+    const newCurveData = [];
+    
+    // 获取模式选择
+    const smoothMode = elements.smoothMode.checked;
+    const quietMode = elements.quietMode.checked;
+    const strongMode = elements.strongMode.checked;
+    
+    // 根据模式调整参数
+    let baseMin = CONFIG.MIN_SPEED_LIMIT; // 20
+    let baseMax = CONFIG.MAX_SPEED_LIMIT; // 90
+    let baseValue = 55; // 基础值
+    let variationRange = 25; // 变化范围
+    let smoothingStrength = 0.3; // 平滑强度
+    
+    // 安静模式：降低风速范围
+    if (quietMode) {
+        baseMin = 20;
+        baseMax = 50;
+        baseValue = 30;
+        variationRange = 15;
+    }
+    
+    // 强劲模式：提高风速范围
+    if (strongMode) {
+        baseMin = 50;
+        baseMax = 90;
+        baseValue = 70;
+        variationRange = 20;
+    }
+    
+    // 平滑模式：增加平滑强度
+    if (smoothMode) {
+        smoothingStrength = 0.6;
+    }
+    
+    // 生成128个随机数据点
+    for (let i = 0; i < 128; i++) {
+        // 使用改进的随机算法
+        let value = generateValueWithMode(i, baseMin, baseMax, baseValue, variationRange, smoothMode, quietMode, strongMode);
+        
+        // 确保在范围内
+        value = Math.max(baseMin, Math.min(baseMax, Math.round(value)));
+        newCurveData.push(value);
+    }
+    
+    // 应用平滑处理
+    const smoothedData = applySmartSmoothing(newCurveData, smoothingStrength);
+    
+    // 更新曲线数据
+    state.curveData = smoothedData;
+    
+    // 更新文本区域
+    elements.curveData.value = state.curveData.join(' ');
+    
+    // 重新绘制曲线
+    drawCurve();
+    
+    // 显示成功消息
+    showTempMessage("已生成随机自然风曲线！");
+}
+
+// 根据模式生成单个值
+function generateValueWithMode(index, baseMin, baseMax, baseValue, variationRange, smoothMode, quietMode, strongMode) {
+    // 随机选择生成策略
+    const strategy = Math.floor(Math.random() * 4);
+    
+    let value;
+    
+    switch(strategy) {
+        case 0: // 波浪模式
+            value = generateWavePattern(index, baseMin, baseMax, baseValue, variationRange);
+            break;
+        case 1: // 随机漫步模式
+            value = generateRandomWalk(index, baseMin, baseMax, baseValue, variationRange);
+            break;
+        case 2: // 突发模式（阵风）
+            value = generateGustPattern(index, baseMin, baseMax, baseValue, variationRange, strongMode);
+            break;
+        case 3: // 阶梯模式
+            value = generateSteppedPattern(index, baseMin, baseMax, baseValue, variationRange);
+            break;
+        default:
+            value = baseValue;
+    }
+    
+    return value;
+}
+
+// 波浪模式
+function generateWavePattern(index, baseMin, baseMax, baseValue, variationRange) {
+    const freq1 = 0.03 + Math.random() * 0.05;
+    const freq2 = 0.08 + Math.random() * 0.1;
+    const freq3 = 0.15 + Math.random() * 0.2;
+    
+    const amp1 = variationRange * 0.5;
+    const amp2 = variationRange * 0.3;
+    const amp3 = variationRange * 0.2;
+    
+    let value = baseValue;
+    value += Math.sin(index * freq1) * amp1;
+    value += Math.sin(index * freq2) * amp2;
+    value += Math.sin(index * freq3) * amp3;
+    
+    // 添加随机噪声
+    value += (Math.random() - 0.5) * variationRange * 0.3;
+    
+    return value;
+}
+
+// 随机漫步模式
+function generateRandomWalk(index, baseMin, baseMax, baseValue, variationRange) {
+    if (index === 0) {
+        return baseValue + (Math.random() - 0.5) * variationRange;
+    }
+    
+    // 基于前一个值进行随机偏移
+    const lastValue = state.curveData[index - 1] || baseValue;
+    const change = (Math.random() - 0.5) * variationRange * 0.5;
+    return lastValue + change;
+}
+
+// 突发模式（阵风）
+function generateGustPattern(index, baseMin, baseMax, baseValue, variationRange, strongMode) {
+    // 阵风概率
+    const gustProbability = strongMode ? 0.15 : 0.08;
+    const isGust = Math.random() < gustProbability;
+    
+    if (isGust) {
+        // 阵风：突然增加到较高值
+        return baseMax - Math.random() * variationRange * 0.3;
+    } else {
+        // 非阵风：较低值
+        return baseMin + Math.random() * variationRange * 0.7;
+    }
+}
+
+// 阶梯模式
+function generateSteppedPattern(index, baseMin, baseMax, baseValue, variationRange) {
+    // 每15-25个点改变一次值
+    const stepSize = 15 + Math.floor(Math.random() * 11);
+    
+    if (index % stepSize === 0) {
+        // 在新的阶梯段，随机选择一个新值
+        return baseMin + Math.random() * (baseMax - baseMin);
+    } else {
+        // 在同一阶梯内，小幅度变化
+        const lastValue = state.curveData[index - 1] || baseValue;
+        return lastValue + (Math.random() - 0.5) * variationRange * 0.2;
+    }
+}
+
+// 智能平滑处理
+function applySmartSmoothing(data, smoothingStrength) {
+    const smoothed = [...data];
+    
+    // 平滑处理
+    for (let i = 1; i < data.length - 1; i++) {
+        const prev = data[i-1];
+        const curr = data[i];
+        const next = data[i+1];
+        
+        // 计算加权平均
+        const weightedAvg = (prev * smoothingStrength + curr + next * smoothingStrength) / (1 + 2 * smoothingStrength);
+        smoothed[i] = Math.round(weightedAvg);
+    }
+    
+    return smoothed;
+}
+
+function setupCanvasEvents() {
+    const canvas = elements.curveCanvas;
+    
+    // 鼠标事件
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mouseleave', handleMouseUp);
+    
+    // 触摸事件
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', handleTouchEnd);
+    
+    // 防止上下文菜单
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+function getPointIndexFromX(x) {
+    const canvas = elements.curveCanvas;
+    const width = canvas.width;
+    const padding = 20;
+    const chartWidth = width - 2 * padding;
+    
+    // 计算点击位置对应的数据点索引
+    const pointWidth = chartWidth / (state.curveData.length - 1);
+    let clickedIndex = Math.round((x - padding) / pointWidth);
+    
+    // 确保索引在有效范围内
+    return Math.max(0, Math.min(state.curveData.length - 1, clickedIndex));
+}
+
+function getValueFromY(y) {
+    const canvas = elements.curveCanvas;
+    const height = canvas.height;
+    const padding = 20;
+    const chartHeight = height - 2 * padding;
+    
+    // 将Y坐标转换为数值（20-90）
+    let value = Math.round(90 - ((y - padding) / chartHeight) * 70);
+    
+    // 限制在20-90范围内
+    return Math.max(CONFIG.MIN_SPEED_LIMIT, Math.min(CONFIG.MAX_SPEED_LIMIT, value));
+}
+
+function handleMouseDown(event) {
+    event.preventDefault();
+    const rect = elements.curveCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    startDrag(x, y);
+}
+
+function handleTouchStart(event) {
+    event.preventDefault();
+    const rect = elements.curveCanvas.getBoundingClientRect();
+    const touch = event.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    startDrag(x, y);
+}
+
+function startDrag(x, y) {
+    const canvas = elements.curveCanvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 20;
+    const chartWidth = width - 2 * padding;
+    const chartHeight = height - 2 * padding;
+    
+    // 检查点击是否在图表区域内
+    if (x < padding || x > width - padding || y < padding || y > height - padding) {
+        return;
+    }
+    
+    // 找到最近的数据点
+    const pointIndex = getPointIndexFromX(x);
+    const pointY = height - padding - ((state.curveData[pointIndex] - 20) / 70 * chartHeight);
+    
+    // 检查点击是否接近该点（允许一定的误差）
+    const distance = Math.sqrt(Math.pow(x - (padding + pointIndex * (chartWidth / (state.curveData.length - 1))), 2) + Math.pow(y - pointY, 2));
+    
+    if (distance < 20) { // 20像素内的点击视为选中该点
+        state.isDragging = true;
+        state.selectedPointIndex = pointIndex;
+        state.dragStartY = y;
+        state.dragStartValue = state.curveData[pointIndex];
+        canvas.classList.add('dragging');
+    }
+}
+
+function handleMouseMove(event) {
+    if (!state.isDragging) return;
+    
+    const rect = elements.curveCanvas.getBoundingClientRect();
+    const y = event.clientY - rect.top;
+    
+    updateDrag(y);
+}
+
+function handleTouchMove(event) {
+    if (!state.isDragging) return;
+    
+    const rect = elements.curveCanvas.getBoundingClientRect();
+    const touch = event.touches[0];
+    const y = touch.clientY - rect.top;
+    
+    updateDrag(y);
+}
+
+function updateDrag(y) {
+    const canvas = elements.curveCanvas;
+    const height = canvas.height;
+    const padding = 20;
+    const chartHeight = height - 2 * padding;
+    
+    // 计算新的数值（限制在20-90范围内）
+    let newValue = getValueFromY(y);
+    
+    // 更新数据点
+    state.curveData[state.selectedPointIndex] = newValue;
+    
+    // 更新文本区域
+    elements.curveData.value = state.curveData.join(' ');
+    
+    // 重新绘制曲线
+    drawCurve();
+}
+
+function handleMouseUp() {
+    endDrag();
+}
+
+function handleTouchEnd() {
+    endDrag();
+}
+
+function endDrag() {
+    if (state.isDragging) {
+        state.isDragging = false;
+        state.selectedPointIndex = -1;
+        elements.curveCanvas.classList.remove('dragging');
+    }
+}
+
+// 更新曲线数据 - 修改时不检测，只更新显示
+function updateCurveFromText() {
+    const text = elements.curveData.value.trim();
+    if (!text) return;
+    
+    // 解析十进制数值
+    const values = text.split(/\s+/).map(v => parseInt(v));
+    
+    // 验证数据长度
+    if (values.length !== 128) {
+        // 不弹窗提示，只更新显示
+        return;
+    }
+    
+    // 更新曲线数据（不验证范围，提交时再验证）
+    state.curveData = values;
+    
+    // 重新绘制曲线
+    drawCurve();
+}
+
+function drawCurve() {
+    const canvas = elements.curveCanvas;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 20;
+    const chartWidth = width - 2 * padding;
+    const chartHeight = height - 2 * padding;
+    
+    // 清空画布
+    ctx.clearRect(0, 0, width, height);
+    
+    // 绘制背景
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    
+    // 计算统计数据
+    const minVal = Math.min(...state.curveData);
+    const maxVal = Math.max(...state.curveData);
+    const avgVal = Math.round(state.curveData.reduce((a, b) => a + b, 0) / state.curveData.length);
+    
+    // 更新统计显示
+    elements.minValue.textContent = minVal;
+    elements.maxValue.textContent = maxVal;
+    elements.avgValue.textContent = avgVal;
+    
+    // 绘制网格线
+    ctx.strokeStyle = '#f0f0f0';
+    ctx.lineWidth = 1;
+    
+    // 水平网格线
+    for (let i = 0; i <= 5; i++) {
+        const y = padding + (chartHeight * i / 5);
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+    }
+    
+    // 垂直网格线
+    for (let i = 0; i <= 8; i++) {
+        const x = padding + (chartWidth * i / 8);
+        ctx.beginPath();
+        ctx.moveTo(x, padding);
+        ctx.lineTo(x, height - padding);
+        ctx.stroke();
+    }
+    
+    // 绘制坐标轴
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, height - padding);
+    ctx.lineTo(width - padding, height - padding);
+    ctx.stroke();
+    
+    // 绘制曲线
+    if (state.curveData.length === 0) return;
+    
+    ctx.strokeStyle = '#667eea';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    const pointWidth = chartWidth / (state.curveData.length - 1);
+    
+    for (let i = 0; i < state.curveData.length; i++) {
+        const x = padding + i * pointWidth;
+        const y = height - padding - ((state.curveData[i] - 20) / 70 * chartHeight);
+        
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    }
+    
+    ctx.stroke();
+    
+    // 绘制数据点
+    for (let i = 0; i < state.curveData.length; i++) {
+        const x = padding + i * pointWidth;
+        const y = height - padding - ((state.curveData[i] - 20) / 70 * chartHeight);
+        
+        ctx.beginPath();
+        if (i === state.selectedPointIndex) {
+            ctx.fillStyle = '#ff6b6b';
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+        } else {
+            ctx.fillStyle = '#667eea';
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+        }
+        ctx.fill();
+    }
+}
+
+function showTempMessage(message) {
+    // 创建一个临时消息显示
+    const hint = document.querySelector('.edit-hint');
+    const originalText = hint.textContent;
+    hint.textContent = message;
+    hint.style.background = 'rgba(0, 184, 148, 0.9)';
+    
+    setTimeout(() => {
+        hint.textContent = originalText;
+        hint.style.background = 'rgba(102, 126, 234, 0.9)';
+    }, 1500);
+}
+
+async function readNatureWindCurve() {
+    if (!state.device || !state.device.gatt.connected) {
+        alert("请先连接风扇！");
+        return;
+    }
+    
+    if (!state.natureWindService) {
+        alert("自然风服务不可用，请确保设备支持自然风曲线功能！");
+        return;
+    }
+    
+    try {
+        const characteristic = await state.natureWindService.getCharacteristic(CONFIG.CHARACTERISTICS.NATURE_WIND_CURVE);
+        const value = await characteristic.readValue();
+        
+        // 读取128个字节
+        const curveData = [];
+        for (let i = 0; i < 128 && i < value.byteLength; i++) {
+            let val = value.getUint8(i);
+            // 确保值在20-90范围内
+            if (val < CONFIG.MIN_SPEED_LIMIT) val = CONFIG.MIN_SPEED_LIMIT;
+            if (val > CONFIG.MAX_SPEED_LIMIT) val = CONFIG.MAX_SPEED_LIMIT;
+            curveData.push(val);
+        }
+        
+        // 验证数据
+        if (curveData.length === 128) {
+            // 更新曲线数据
+            state.curveData = curveData;
+            
+            // 更新文本区域
+            elements.curveData.value = state.curveData.join(' ');
+            
+            // 重新绘制曲线
+            drawCurve();
+            
+            alert("自然风曲线读取成功！");
+        } else {
+            alert(`读取的数据点数量不正确: ${curveData.length}`);
+        }
+    } catch (error) {
+        alert("读取自然风曲线失败：" + error.message);
+    }
+}
+
+async function applyEditedCurve() {
+    if (!state.device || !state.device.gatt.connected) {
+        alert("请先连接风扇！");
+        return;
+    }
+    
+    if (!state.natureWindService) {
+        alert("自然风服务不可用，请确保设备支持自然风曲线功能！");
+        return;
+    }
+    
+    if (state.curveData.length !== 128) {
+        alert("曲线数据应包含128个值！");
+        return;
+    }
+    
+    // 验证数据范围 - 只在提交时检测
+    for (let i = 0; i < state.curveData.length; i++) {
+        if (state.curveData[i] < CONFIG.MIN_SPEED_LIMIT || state.curveData[i] > CONFIG.MAX_SPEED_LIMIT) {
+            alert(`第${i+1}个值超出范围(${CONFIG.MIN_SPEED_LIMIT}-${CONFIG.MAX_SPEED_LIMIT})`);
+            return;
+        }
+    }
+    
+    try {
+        // 将十进制数组转换为十六进制字符串
+        const hexString = decimalArrayToHexString(state.curveData);
+        
+        // 转换为字节数组
+        const data = hexStringToBytes(hexString);
+        
+        // 写入自然风曲线数据
+        const characteristic = await state.natureWindService.getCharacteristic(CONFIG.CHARACTERISTICS.NATURE_WIND_CURVE);
+        
+        // 检查特征是否支持写入
+        if (characteristic.properties.writeWithoutResponse) {
+            await characteristic.writeValueWithoutResponse(data);
+        } else if (characteristic.properties.write) {
+            await characteristic.writeValue(data);
+        } else {
+            throw new Error("特征不支持写入");
+        }
+        
+        alert("自然风曲线已应用！");
+    } catch (error) {
+        alert("应用自然风曲线失败：" + error.message);
+    }
+}
+
+function restoreDefaultCurve() {
+    if (!state.device || !state.device.gatt.connected) {
+        alert("请先连接风扇！");
+        return;
+    }
+    
+    if (!state.natureWindService) {
+        alert("自然风服务不可用，请确保设备支持自然风曲线功能！");
+        return;
+    }
+    
+    try {
+        // 恢复默认曲线数据
+        state.curveData = CONFIG.DEFAULT_NATURE_WIND_CURVE_DECIMAL.split(/\s+/).map(Number);
+        
+        // 确保数据在20-90范围内
+        state.curveData = state.curveData.map(value => {
+            if (value < CONFIG.MIN_SPEED_LIMIT) return CONFIG.MIN_SPEED_LIMIT;
+            if (value > CONFIG.MAX_SPEED_LIMIT) return CONFIG.MAX_SPEED_LIMIT;
+            return value;
+        });
+        
+        elements.curveData.value = state.curveData.join(' ');
+        
+        // 绘制曲线
+        drawCurve();
+        
+        // 转换为十六进制并写入
+        const hexString = decimalArrayToHexString(state.curveData);
+        const data = hexStringToBytes(hexString);
+        
+        // 写入自然风曲线数据
+        writeNatureWindCurveData(data);
+        
+        alert("自然风曲线已还原为默认值！");
+    } catch (error) {
+        alert("还原自然风曲线失败：" + error.message);
+    }
+}
+
+async function writeNatureWindCurveData(data) {
+    try {
+        const characteristic = await state.natureWindService.getCharacteristic(CONFIG.CHARACTERISTICS.NATURE_WIND_CURVE);
+        
+        // 检查特征是否支持写入
+        if (characteristic.properties.writeWithoutResponse) {
+            await characteristic.writeValueWithoutResponse(data);
+        } else if (characteristic.properties.write) {
+            await characteristic.writeValue(data);
+        } else {
+            throw new Error("特征不支持写入");
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
+function hexStringToBytes(hex) {
+    const bytes = [];
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes.push(parseInt(hex.substr(i, 2), 16));
+    }
+    return new Uint8Array(bytes);
+}
+
+function speedToHex(speed) {
+    return speed.toString(16).padStart(2, '0').toUpperCase();
+}
+
+// 初始化
+initializeCurveEditor();
+</script>
+</body>
+</html>
