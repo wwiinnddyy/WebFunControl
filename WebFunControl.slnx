@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="WebFunControl/WebFunControl.csproj" />
+  <Project Path="WebFunControl.Desktop/WebFunControl.Desktop.csproj" />
+  <Project Path="WebFunControl.Android/WebFunControl.Android.csproj" />
+</Solution>

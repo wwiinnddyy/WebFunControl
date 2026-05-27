@@ -21,7 +21,7 @@ jobs:
           dotnet-quality: 'preview'
 
       - name: Restore dependencies
-        run: dotnet restore WebFunControl.Desktop/WebFunControl.Desktop.csproj
+        run: dotnet restore WebFunControl.slnx
 
       - name: Build & Publish Windows
         run: |
@@ -55,7 +55,7 @@ jobs:
         run: dotnet workload install android
 
       - name: Restore dependencies
-        run: dotnet restore WebFunControl.Android/WebFunControl.Android.csproj
+        run: dotnet restore WebFunControl.slnx
 
       - name: Build & Publish Android
         run: |

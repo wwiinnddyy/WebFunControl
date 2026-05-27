@@ -1,0 +1,19 @@
+<Project>
+  <!--
+    强制覆盖环境变量 Version 带来的非法 NuGet 版本字符串。
+    系统环境变量 Version=V7.24.42SP3 会被 MSBuild 当作项目版本，
+    导致 NETSDK1018 错误。这里用 Condition 检测非法值并回退到默认版本。
+  -->
+  <PropertyGroup>
+    <_EnvVersion>$(Version)</_EnvVersion>
+    <DefaultProjectVersion>1.0.0</DefaultProjectVersion>
+  </PropertyGroup>
+
+  <!-- 如果 Version 不以数字开头（非法 NuGet 版本），则强制使用默认值 -->
+  <PropertyGroup Condition="!$(_EnvVersion.StartsWith('0')) AND !$(_EnvVersion.StartsWith('1')) AND !$(_EnvVersion.StartsWith('2')) AND !$(_EnvVersion.StartsWith('3')) AND !$(_EnvVersion.StartsWith('4')) AND !$(_EnvVersion.StartsWith('5')) AND !$(_EnvVersion.StartsWith('6')) AND !$(_EnvVersion.StartsWith('7')) AND !$(_EnvVersion.StartsWith('8')) AND !$(_EnvVersion.StartsWith('9'))">
+    <Version>$(DefaultProjectVersion)</Version>
+    <AssemblyVersion>$(DefaultProjectVersion)</AssemblyVersion>
+    <FileVersion>$(DefaultProjectVersion)</FileVersion>
+    <InformationalVersion>$(DefaultProjectVersion)</InformationalVersion>
+  </PropertyGroup>
+</Project>
