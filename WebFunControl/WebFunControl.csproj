@@ -6,6 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    <!-- AOT 兼容：使用 partial 裁剪模式避免过度裁剪 -->
+    <TrimMode>partial</TrimMode>
+    <IsAotCompatible>true</IsAotCompatible>
     <!-- 版本号，由CI覆盖 -->
     <Version>1.0.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
@@ -27,6 +30,12 @@
 
   <ItemGroup>
     <AdditionalFiles Include="**\*.axaml" />
+  </ItemGroup>
+
+  <!-- AOT 裁剪保留 -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="FluentAvalonia" />
+    <TrimmerRootAssembly Include="Plugin.BLE" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ==================== Windows 构建验证 ====================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Publish Windows Native AOT
+        run: |
+          dotnet publish WebFunControl.Desktop/WebFunControl.Desktop.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishAot=true `
+            -p:TrimMode=partial `
+            -o ./publish/win-x64
+
+      - name: Verify output
+        shell: pwsh
+        run: |
+          $exe = "./publish/win-x64/WebFunControl.Desktop.exe"
+          if (Test-Path $exe) {
+            $size = [math]::Round((Get-Item $exe).Length / 1MB, 1)
+            Write-Host "✅ AOT exe produced: ${size} MB"
+          } else {
+            Write-Error "❌ AOT exe not found!"
+          }
+
+  # ==================== Android 构建验证 ====================
+  build-android:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Publish Android APK
+        run: |
+          dotnet publish WebFunControl.Android/WebFunControl.Android.csproj `
+            -c Release `
+            -f net10.0-android `
+            -p:AndroidPackageFormat=apk `
+            -p:AndroidSupportedAbis=arm64-v8a `
+            -p:AndroidKeyStore=false `
+            -o ./publish/android
+
+      - name: Verify output
+        shell: pwsh
+        run: |
+          $apk = Get-ChildItem -Path ./publish/android -Filter "*.apk" -Recurse | Select-Object -First 1
+          if ($apk) {
+            $size = [math]::Round($apk.Length / 1MB, 1)
+            Write-Host "✅ APK produced: ${size} MB"
+          } else {
+            Write-Error "❌ APK not found!"
+          }

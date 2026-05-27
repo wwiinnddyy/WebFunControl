@@ -3,12 +3,15 @@ name: Build & Release
 on:
   push:
     tags: ['v*']
-
-env:
-  APP_VERSION: ${{ github.ref_name }}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（如 1.2.0，不含 v 前缀）'
+        required: false
+        default: ''
 
 jobs:
-  # ==================== Windows ====================
+  # ==================== Windows Native AOT ====================
   build-windows:
     runs-on: windows-latest
     steps:
@@ -20,26 +23,30 @@ jobs:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
 
-      - name: Restore dependencies
-        run: dotnet restore WebFunControl.slnx
-
-      - name: Build & Publish Windows
+      - name: Publish Windows Native AOT
         run: |
           dotnet publish WebFunControl.Desktop/WebFunControl.Desktop.csproj `
-            -c Release -r win-x64 --self-contained true `
-            -p:Version=${{ env.APP_VERSION }} `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:EnableCompressionInSingleFile=true `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishAot=true `
+            -p:TrimMode=partial `
+            -p:Version=${{ github.event.inputs.version || github.ref_name }} `
             -o ./publish/win-x64
+
+      - name: Package Windows
+        run: |
+          $files = Get-ChildItem -Path ./publish/win-x64 -Exclude *.pdb
+          Compress-Archive -Path $files -DestinationPath ./WebFunControl-win-x64.zip
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebFunControl-win-x64
-          path: ./publish/win-x64
+          path: ./WebFunControl-win-x64.zip
+          if-no-files-found: error
 
-  # ==================== Android ====================
+  # ==================== Android APK ====================
   build-android:
     runs-on: windows-latest
     steps:
@@ -54,25 +61,38 @@ jobs:
       - name: Install Android workload
         run: dotnet workload install android
 
-      - name: Restore dependencies
-        run: dotnet restore WebFunControl.slnx
-
-      - name: Build & Publish Android
+      - name: Publish Android APK
         run: |
           dotnet publish WebFunControl.Android/WebFunControl.Android.csproj `
-            -c Release -f net10.0-android `
-            -p:Version=${{ env.APP_VERSION }} `
-            -p:ApplicationDisplayVersion=${{ env.APP_VERSION }} `
-            -p:AndroidPackageFormat=aab `
+            -c Release `
+            -f net10.0-android `
+            -p:AndroidPackageFormat=apk `
+            -p:AndroidSupportedAbis=arm64-v8a `
+            -p:Version=${{ github.event.inputs.version || github.ref_name }} `
+            -p:ApplicationDisplayVersion=${{ github.event.inputs.version || github.ref_name }} `
+            -p:AndroidKeyStore=false `
             -o ./publish/android
+
+      - name: Locate and rename APK
+        id: apk
+        shell: pwsh
+        run: |
+          $apk = Get-ChildItem -Path ./publish/android -Filter "*-Signed.apk" -Recurse | Select-Object -First 1
+          if (-not $apk) {
+            $apk = Get-ChildItem -Path ./publish/android -Filter "*.apk" -Recurse | Select-Object -First 1
+          }
+          if (-not $apk) { Write-Error "APK not found!"; exit 1 }
+          Write-Host "Found APK: $($apk.FullName) ($([math]::Round($apk.Length/1MB,1)) MB)"
+          Copy-Item $apk.FullName ./WebFunControl-android.apk
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebFunControl-android
-          path: ./publish/android/*.{aab,apk}
+          path: ./WebFunControl-android.apk
+          if-no-files-found: error
 
-  # ==================== Release ====================
+  # ==================== GitHub Release ====================
   release:
     needs: [build-windows, build-android]
     runs-on: ubuntu-latest
@@ -80,7 +100,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
@@ -88,16 +108,17 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: WebFunControl ${{ github.ref_name }}
+          generate_release_notes: true
           body: |
-            ## WebFunControl ${{ github.ref_name }}
-
             ### 下载
-            - **Windows**: `WebFunControl-win-x64` (自包含单文件)
-            - **Android**: `WebFunControl-android` (AAB 安装包)
+            | 平台 | 文件 | 说明 |
+            |------|------|------|
+            | Windows x64 | `WebFunControl-win-x64.zip` | Native AOT，无需安装 .NET |
+            | Android | `WebFunControl-android.apk` | arm64-v8a |
 
-            ### 更新说明
-            请查看下方提交记录了解更新详情。
+            ### 系统要求
+            - Windows 10 19041 (20H1) 及以上
+            - Android 5.0 (API 21) 及以上
           files: |
-            ./artifacts/WebFunControl-win-x64/**
-            ./artifacts/WebFunControl-android/**
+            ./artifacts/WebFunControl-win-x64/*
+            ./artifacts/WebFunControl-android/*

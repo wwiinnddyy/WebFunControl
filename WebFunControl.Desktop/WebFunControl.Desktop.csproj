@@ -8,6 +8,9 @@
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- AOT 发布支持 -->
+    <PublishAot>true</PublishAot>
+    <TrimMode>partial</TrimMode>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +20,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WebFunControl\WebFunControl.csproj" />
+  </ItemGroup>
+
+  <!-- AOT 裁剪保留：确保反射使用的类型不被裁剪 -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="FluentAvalonia" />
+    <TrimmerRootAssembly Include="WebFunControl" />
   </ItemGroup>
 
 </Project>
