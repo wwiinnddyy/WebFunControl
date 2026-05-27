@@ -35,9 +35,9 @@ jobs:
           $exe = "./publish/win-x64/WebFunControl.Desktop.exe"
           if (Test-Path $exe) {
             $size = [math]::Round((Get-Item $exe).Length / 1MB, 1)
-            Write-Host "✅ AOT exe produced: ${size} MB"
+            Write-Host "AOT exe produced: ${size} MB"
           } else {
-            Write-Error "❌ AOT exe not found!"
+            Write-Error "AOT exe not found!"
           }
 
   # ==================== Android 构建验证 ====================
@@ -60,8 +60,9 @@ jobs:
           dotnet publish WebFunControl.Android/WebFunControl.Android.csproj `
             -c Release `
             -f net10.0-android `
+            -r android-arm64 `
+            --self-contained true `
             -p:AndroidPackageFormat=apk `
-            -p:AndroidSupportedAbis=arm64-v8a `
             -p:AndroidKeyStore=false `
             -o ./publish/android
 
@@ -71,7 +72,7 @@ jobs:
           $apk = Get-ChildItem -Path ./publish/android -Filter "*.apk" -Recurse | Select-Object -First 1
           if ($apk) {
             $size = [math]::Round($apk.Length / 1MB, 1)
-            Write-Host "✅ APK produced: ${size} MB"
+            Write-Host "APK produced: ${size} MB"
           } else {
-            Write-Error "❌ APK not found!"
+            Write-Error "APK not found!"
           }

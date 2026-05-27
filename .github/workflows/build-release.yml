@@ -70,8 +70,9 @@ jobs:
           dotnet publish WebFunControl.Android/WebFunControl.Android.csproj `
             -c Release `
             -f net10.0-android `
+            -r android-arm64 `
+            --self-contained true `
             -p:AndroidPackageFormat=apk `
-            -p:AndroidSupportedAbis=arm64-v8a `
             -p:Version=$ver `
             -p:ApplicationDisplayVersion=$ver `
             -p:AndroidKeyStore=false `
@@ -100,7 +101,8 @@ jobs:
   release:
     needs: [build-windows, build-android]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    # 仅在推送 tag 或手动触发时创建 Release
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     steps:
@@ -109,20 +111,42 @@ jobs:
         with:
           path: ./artifacts
 
-      - name: Create Release
+      - name: Determine version
+        id: version
+        run: |
+          VER="${{ github.event.inputs.version }}"
+          if [ -z "$VER" ]; then
+            VER="${{ github.ref_name }}"
+            VER="${VER#v}"
+          fi
+          echo "version=$VER" >> $GITHUB_OUTPUT
+          echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+
+      - name: List artifacts
+        run: find ./artifacts -type f -name "*.zip" -o -name "*.apk" | head -20
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag || format('v{0}', steps.version.outputs.version) }}
+          name: WebFunControl v${{ steps.version.outputs.version }}
           generate_release_notes: true
           body: |
-            ### 下载
+            ## 下载
+
             | 平台 | 文件 | 说明 |
             |------|------|------|
             | Windows x64 | `WebFunControl-win-x64.zip` | Native AOT，无需安装 .NET |
-            | Android | `WebFunControl-android.apk` | arm64-v8a |
+            | Android arm64 | `WebFunControl-android.apk` | APK 安装包 |
 
-            ### 系统要求
-            - Windows 10 19041 (20H1) 及以上
-            - Android 5.0 (API 21) 及以上
+            ## 系统要求
+            - **Windows**: Windows 10 19041 (20H1) 及以上，无需安装 .NET 运行时
+            - **Android**: Android 6.0 (API 23) 及以上
+
+            ## 更新说明
+            请查看下方自动生成的变更记录。
           files: |
             ./artifacts/WebFunControl-win-x64/*
             ./artifacts/WebFunControl-android/*
+          draft: false
+          prerelease: false
