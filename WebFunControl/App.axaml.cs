@@ -32,6 +32,14 @@ public class App : Application
             var vm = Services.GetRequiredService<MainViewModel>();
             desktop.MainWindow = new MainWindow { DataContext = vm };
         }
+        else if (ApplicationLifetime is IActivityApplicationLifetime activityLifetime)
+        {
+            activityLifetime.MainViewFactory = () =>
+            {
+                var vm = Services.GetRequiredService<MainViewModel>();
+                return new MainView { DataContext = vm };
+            };
+        }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
             var vm = Services.GetRequiredService<MainViewModel>();

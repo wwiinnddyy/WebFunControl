@@ -1,15 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0-android</TargetFramework>
     <RootNamespace>WebFunControl.Android</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
     <ApplicationId>com.webfuncontrol.fan</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <!-- 版本号，由CI覆盖 -->
     <Version>1.0.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
@@ -19,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Android" Version="12.0.3" />
+    <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1" />
     <PackageReference Include="Plugin.BLE" Version="3.2.1" />
   </ItemGroup>
 

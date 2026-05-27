@@ -25,13 +25,15 @@ jobs:
 
       - name: Publish Windows Native AOT
         run: |
+          $ver = "${{ github.event.inputs.version }}"
+          if (-not $ver) { $ver = "${{ github.ref_name }}" -replace '^v','' }
           dotnet publish WebFunControl.Desktop/WebFunControl.Desktop.csproj `
             -c Release `
             -r win-x64 `
             --self-contained true `
             -p:PublishAot=true `
             -p:TrimMode=partial `
-            -p:Version=${{ github.event.inputs.version || github.ref_name }} `
+            -p:Version=$ver `
             -o ./publish/win-x64
 
       - name: Package Windows
@@ -63,13 +65,15 @@ jobs:
 
       - name: Publish Android APK
         run: |
+          $ver = "${{ github.event.inputs.version }}"
+          if (-not $ver) { $ver = "${{ github.ref_name }}" -replace '^v','' }
           dotnet publish WebFunControl.Android/WebFunControl.Android.csproj `
             -c Release `
             -f net10.0-android `
             -p:AndroidPackageFormat=apk `
             -p:AndroidSupportedAbis=arm64-v8a `
-            -p:Version=${{ github.event.inputs.version || github.ref_name }} `
-            -p:ApplicationDisplayVersion=${{ github.event.inputs.version || github.ref_name }} `
+            -p:Version=$ver `
+            -p:ApplicationDisplayVersion=$ver `
             -p:AndroidKeyStore=false `
             -o ./publish/android
 
