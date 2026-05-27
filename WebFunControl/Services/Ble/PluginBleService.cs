@@ -8,8 +8,7 @@ namespace WebFunControl.Services.Ble;
 
 /// <summary>
 /// 基于Plugin.BLE的统一跨平台BLE服务实现
-/// 覆盖 Windows / Android / macOS / Linux 全平台
-/// 对应HTML中Web Bluetooth API的完整功能映射
+/// 严格对齐HTML中Web Bluetooth API的行为
 /// </summary>
 public class PluginBleService : IBleService
 {
@@ -35,6 +34,7 @@ public class PluginBleService : IBleService
 
     public async Task<BleDeviceInfo> ScanAndConnectAsync(string deviceName, CancellationToken ct = default)
     {
+        // 检查蓝牙可用性
         if (!_ble.IsAvailable)
             throw new InvalidOperationException("蓝牙不可用，请确认设备支持BLE并已开启蓝牙");
 
@@ -45,7 +45,7 @@ public class PluginBleService : IBleService
         if (_connectedDevice != null)
             await DisconnectAsync();
 
-        // 扫描设备 — 按名称过滤
+        // 扫描设备 — 对应HTML: navigator.bluetooth.requestDevice({ filters: [{ name: "W66D" }] })
         var tcs = new TaskCompletionSource<IDevice>();
 
         _adapter.ScanTimeout = 15000;
@@ -62,24 +62,25 @@ public class PluginBleService : IBleService
 
         _adapter.DeviceDiscovered += OnDeviceDiscovered;
 
-        await _adapter.StartScanningForDevicesAsync(
-            deviceFilter: d => d.Name?.Equals(deviceName, StringComparison.OrdinalIgnoreCase) == true);
-
         try
         {
+            // 开始扫描（异步，持续扫描直到超时或手动停止）
+            await _adapter.StartScanningForDevicesAsync(
+                deviceFilter: d => d.Name?.Equals(deviceName, StringComparison.OrdinalIgnoreCase) == true);
+
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(15));
             cts.Token.Register(() => tcs.TrySetCanceled());
 
             var foundDevice = await tcs.Task;
 
-            // 连接设备
+            // 连接设备 — 对应HTML: device.gatt.connect()
             var connectArgs = new ConnectParameters(forceBleTransport: true);
             await _adapter.ConnectToDeviceAsync(foundDevice, connectArgs);
 
             _connectedDevice = foundDevice;
 
-            // 预缓存服务和特征
+            // 预缓存服务和特征 — 对应HTML中获取 mainService/ffd0Service/natureWindService
             await CacheServicesAndCharacteristicsAsync();
 
             ConnectionStateChanged?.Invoke(this, true);

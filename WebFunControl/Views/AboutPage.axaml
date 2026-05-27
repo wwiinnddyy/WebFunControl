@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:WebFunControl.ViewModels"
+             x:Class="WebFunControl.Views.AboutPage"
+             x:DataType="vm:MainViewModel">
+
+    <ScrollViewer>
+        <StackPanel Margin="24" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- 应用图标和名称 -->
+            <StackPanel HorizontalAlignment="Center" Spacing="8">
+                <Border Width="80" Height="80" CornerRadius="16" Background="#667EEA" HorizontalAlignment="Center">
+                    <TextBlock Text="W" FontSize="36" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Text="{Binding ApplicationName}" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding ApplicationDescription}" FontSize="14" Opacity="0.7" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- 版本信息 -->
+            <Border CornerRadius="8" Padding="16" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding Version, StringFormat='版本: {0}'}" FontSize="13" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding ApplicationProjectUrl}" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- 连接状态 -->
+            <Border CornerRadius="8" Padding="16" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding ConnectionStatusText, StringFormat='设备状态: {0}'}" FontSize="13" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding DeviceInfo}" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

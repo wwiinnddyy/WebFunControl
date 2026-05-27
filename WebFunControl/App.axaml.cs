@@ -20,9 +20,10 @@ public class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // 注册DI服务
+        // 注册DI服务 — 使用延迟初始化避免BLE平台实现在构造时崩溃
         var services = new ServiceCollection();
-        services.AddSingleton<IBleService, PluginBleService>();
+        services.AddSingleton<IBleService>(sp => new PluginBleService());
+        services.AddSingleton<DeviceStore>();
         services.AddSingleton<FanControlService>();
         services.AddSingleton<MainViewModel>();
         Services = services.BuildServiceProvider();

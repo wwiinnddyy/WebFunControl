@@ -1,0 +1,201 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:WebFunControl.ViewModels"
+             xmlns:md="using:WebFunControl.Models"
+             x:Class="WebFunControl.Views.HomePage"
+             x:DataType="vm:MainViewModel">
+
+    <ScrollViewer>
+        <StackPanel Margin="24,20" Spacing="20" MaxWidth="560">
+
+            <!-- ====== 设备选择 ====== -->
+            <StackPanel Spacing="10">
+                <!-- 下拉框：已配对设备 + 添加新设备 -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <ComboBox x:Name="DeviceComboBox"
+                              Grid.Column="0"
+                              ItemsSource="{Binding PairedDevices}"
+                              SelectedItem="{Binding SelectedDevice}"
+                              HorizontalAlignment="Stretch"
+                              PlaceholderText="选择设备..."
+                              IsEnabled="{Binding !IsScanning}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="md:PairedDevice">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <!-- 状态指示灯 -->
+                                    <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                                             Fill="{Binding StatusBrush}" />
+                                    <!-- 设备名 -->
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}" VerticalAlignment="Center"
+                                               Opacity="{Binding TextOpacity}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <!-- 扫描添加新设备 -->
+                    <Button Grid.Column="1" Content="+ 添加设备" Command="{Binding AddNewDeviceCommand}" IsEnabled="{Binding !IsScanning}" />
+
+                    <!-- 断开当前连接 -->
+                    <Button Grid.Column="2" Content="断开" Command="{Binding DisconnectCommand}" IsEnabled="{Binding IsConnected}" />
+                </Grid>
+
+                <!-- 扫描中提示 -->
+                <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsScanning}">
+                    <ProgressBar IsIndeterminate="True" Width="120" Height="4" />
+                    <TextBlock Text="正在扫描附近设备..." FontSize="13" Opacity="0.6" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- 连接状态 -->
+                <TextBlock FontSize="13" Opacity="0.6">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0} · {1}">
+                            <Binding Path="ConnectionStatusText" />
+                            <Binding Path="DeviceInfo" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- 错误提示 -->
+            <Border CornerRadius="8" Padding="14,10" IsVisible="{Binding HasError}"
+                    Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="&#xE7BA;" FontFamily="{DynamicResource SymbolThemeFontFamily}" FontSize="16"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding ErrorMessage}" FontSize="13"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- ====== 实时状态面板 ====== -->
+            <StackPanel Spacing="12" IsVisible="{Binding IsConnected}">
+                <TextBlock Text="实时状态" FontSize="16" FontWeight="SemiBold" Opacity="0.85" />
+
+                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                    <!-- 转速 -->
+                    <Border CornerRadius="10" Padding="14,12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#1A667EEA" />
+                        </Border.Background>
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock Text="转速" FontSize="11" Opacity="0.5" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding FanSpeedText}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <!-- 系统电压 -->
+                    <Border Grid.Column="1" CornerRadius="10" Padding="14,12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#1A764BA2" />
+                        </Border.Background>
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock Text="系统电压" FontSize="11" Opacity="0.5" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding VoltageText}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <!-- 电池电压 -->
+                    <Border Grid.Column="2" CornerRadius="10" Padding="14,12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#1A00B894" />
+                        </Border.Background>
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock Text="电池电压" FontSize="11" Opacity="0.5" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding BatteryVoltageText}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <!-- 电流 -->
+                    <Border Grid.Row="1" CornerRadius="10" Padding="14,12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#1AFF6B6B" />
+                        </Border.Background>
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock Text="电流" FontSize="11" Opacity="0.5" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding CurrentText}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <!-- 功率 -->
+                    <Border Grid.Row="1" Grid.Column="1" CornerRadius="10" Padding="14,12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#1AFDCB6E" />
+                        </Border.Background>
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock Text="功率" FontSize="11" Opacity="0.5" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding PowerText}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <!-- 剩余时间 -->
+                    <Border Grid.Row="1" Grid.Column="2" CornerRadius="10" Padding="14,12">
+                        <Border.Background>
+                            <SolidColorBrush Color="#1A6C757D" />
+                        </Border.Background>
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock Text="剩余时间" FontSize="11" Opacity="0.5" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding RemainingTimeText}" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+            <!-- ====== 档位控制 ====== -->
+            <StackPanel Spacing="10" IsVisible="{Binding IsConnected}">
+                <TextBlock Text="档位控制" FontSize="16" FontWeight="SemiBold" Opacity="0.85" />
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="关机" Command="{Binding SetPowerCommand}" CommandParameter="Off" MinWidth="64" />
+                    <Button Content="1档" Command="{Binding SetPowerCommand}" CommandParameter="Gear1" MinWidth="64" />
+                    <Button Content="2档" Command="{Binding SetPowerCommand}" CommandParameter="Gear2" MinWidth="64" />
+                    <Button Content="3档" Command="{Binding SetPowerCommand}" CommandParameter="Gear3" MinWidth="64" />
+                    <Button Content="4档" Command="{Binding SetPowerCommand}" CommandParameter="Gear4" MinWidth="64" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ====== 转速控制 ====== -->
+            <StackPanel Spacing="10" IsVisible="{Binding IsConnected}">
+                <TextBlock Text="转速控制" FontSize="16" FontWeight="SemiBold" Opacity="0.85" />
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Slider Minimum="0" Maximum="100" Value="{Binding FanSpeed}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding FanSpeed, StringFormat='{}{0}%'}" FontSize="18" FontWeight="Bold"
+                               VerticalAlignment="Center" Width="50" HorizontalAlignment="Right" />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                    <TextBlock Text="输入转速:" VerticalAlignment="Center" FontSize="13" />
+                    <NumericUpDown Minimum="0" Maximum="100" Value="{Binding ManualSpeedInput}"
+                                   HorizontalAlignment="Stretch" />
+                    <TextBlock Text="%" VerticalAlignment="Center" FontWeight="SemiBold" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="应用转速" Command="{Binding ApplyManualSpeedCommand}" />
+                    <Button Content="重置默认(50%)" Command="{Binding ResetSpeedCommand}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ====== 自定义定时 ====== -->
+            <StackPanel Spacing="10" IsVisible="{Binding IsConnected}">
+                <TextBlock Text="自定义定时" FontSize="16" FontWeight="SemiBold" Opacity="0.85" />
+
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                    <TextBlock Text="定时（分钟）:" VerticalAlignment="Center" FontSize="13" />
+                    <NumericUpDown Minimum="1" Maximum="480" Value="{Binding TimerMinutes}"
+                                   HorizontalAlignment="Stretch" />
+                    <TextBlock Text="分" VerticalAlignment="Center" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="1小时" Command="{Binding SetPresetTimerCommand}" CommandParameter="1" />
+                    <Button Content="4小时" Command="{Binding SetPresetTimerCommand}" CommandParameter="4" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="设置定时" Command="{Binding SetTimerCommand}" />
+                    <Button Content="取消定时" Command="{Binding CancelTimerCommand}" />
+                    <Button Content="读取剩余" Command="{Binding ReadRemainingTimeCommand}" />
+                </StackPanel>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

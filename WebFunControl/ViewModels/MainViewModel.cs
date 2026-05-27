@@ -8,12 +8,13 @@ namespace WebFunControl.ViewModels;
 
 /// <summary>
 /// 主ViewModel — 聚合所有子功能模块
-/// 全面使用 FluentAvalonia 控件绑定
 /// </summary>
 public partial class MainViewModel : ObservableObject
 {
     private readonly FanControlService _fanService;
+    private readonly DeviceStore _deviceStore;
 
+    // ===== 连接管理 =====
     [ObservableProperty]
     private bool _isConnected;
 
@@ -22,6 +23,15 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _deviceInfo = string.Empty;
+
+    [ObservableProperty]
+    private PairedDevice? _selectedDevice;
+
+    [ObservableProperty]
+    private bool _isScanning;
+
+    /// <summary>已配对设备列表</summary>
+    public ObservableCollection<PairedDevice> PairedDevices { get; } = [];
 
     // ===== 关于信息 =====
     [ObservableProperty]
@@ -124,11 +134,17 @@ public partial class MainViewModel : ObservableObject
     private PeriodicTimer? _refreshTimer;
     private CancellationTokenSource? _refreshCts;
 
-    public MainViewModel(FanControlService fanService)
+    public MainViewModel(FanControlService fanService, DeviceStore deviceStore)
     {
         _fanService = fanService;
+        _deviceStore = deviceStore;
         _fanService.ConnectionStateChanged += OnConnectionStateChanged;
         UpdateCurveDisplay();
+
+        // 加载已保存的配对设备
+        _deviceStore.Load();
+        foreach (var d in _deviceStore.Devices)
+            PairedDevices.Add(d);
     }
 
     private void OnConnectionStateChanged(object? sender, bool isConnected)
@@ -137,19 +153,76 @@ public partial class MainViewModel : ObservableObject
         {
             IsConnected = isConnected;
             ConnectionStatusText = isConnected ? "已连接" : "未连接";
+
+            // 更新设备列表中的连接状态
+            foreach (var d in PairedDevices)
+            {
+                d.IsConnected = isConnected && d == SelectedDevice;
+            }
         });
     }
 
     // ==================== 连接管理 ====================
 
-    [RelayCommand]
-    private async Task ConnectAsync()
+    /// <summary>
+    /// 选中设备时触发连接
+    /// </summary>
+    partial void OnSelectedDeviceChanged(PairedDevice? value)
+    {
+        if (value == null) return;
+        // 如果选中的不是"添加新设备"占位，则连接该设备
+        if (value.Id != "__add_new__")
+        {
+            _ = ConnectToDeviceAsync(value);
+        }
+    }
+
+    private async Task ConnectToDeviceAsync(PairedDevice device)
     {
         try
         {
             ClearError();
+            ConnectionStatusText = "正在连接...";
+            var info = await _fanService.ConnectAsync();
+            DeviceInfo = $"{info.Name} ({info.Id})";
+            ConnectionStatusText = "已连接";
+            device.IsConnected = true;
+            device.IsOnline = true;
+            device.Id = info.Id;
+            device.Name = info.Name;
+            _deviceStore.AddOrUpdate(info.Id, info.Name);
+            await RefreshStatusAsync();
+            await ReadGearSpeeds();
+            StartRealTimeRefresh();
+        }
+        catch (Exception ex)
+        {
+            device.IsConnected = false;
+            device.IsOnline = false;
+            ShowError($"连接失败: {ex.Message}");
+            ConnectionStatusText = "连接失败";
+        }
+    }
+
+    /// <summary>
+    /// 扫描添加新设备
+    /// </summary>
+    [RelayCommand]
+    private async Task AddNewDeviceAsync()
+    {
+        try
+        {
+            ClearError();
+            IsScanning = true;
             ConnectionStatusText = "正在扫描...";
             var info = await _fanService.ConnectAsync();
+
+            // 添加到配对列表
+            _deviceStore.AddOrUpdate(info.Id, info.Name);
+            var device = new PairedDevice { Id = info.Id, Name = info.Name, IsConnected = true, IsOnline = true };
+            PairedDevices.Add(device);
+            SelectedDevice = device;
+
             DeviceInfo = $"{info.Name} ({info.Id})";
             ConnectionStatusText = "已连接";
             await RefreshStatusAsync();
@@ -158,8 +231,12 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowError($"连接失败: {ex.Message}");
-            ConnectionStatusText = "连接失败";
+            ShowError($"扫描失败: {ex.Message}");
+            ConnectionStatusText = "扫描失败";
+        }
+        finally
+        {
+            IsScanning = false;
         }
     }
 
@@ -170,7 +247,12 @@ public partial class MainViewModel : ObservableObject
         {
             StopRealTimeRefresh();
             await _fanService.DisconnectAsync();
+
+            if (SelectedDevice != null)
+                SelectedDevice.IsConnected = false;
+
             DeviceInfo = string.Empty;
+            ConnectionStatusText = "未连接";
             FanSpeedText = "-- %";
             VoltageText = "-- V";
             BatteryVoltageText = "-- V";
@@ -181,6 +263,20 @@ public partial class MainViewModel : ObservableObject
         {
             ShowError($"断开失败: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 移除配对设备
+    /// </summary>
+    [RelayCommand]
+    private void RemoveDevice(PairedDevice device)
+    {
+        if (device.IsConnected)
+        {
+            _ = DisconnectAsync();
+        }
+        PairedDevices.Remove(device);
+        _deviceStore.Remove(device.Id);
     }
 
     // ==================== 档位控制 ====================
@@ -206,7 +302,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (_fanService.IsConnected)
         {
-            _ = _fanService.SetFanSpeedAsync(value);
+            _ = SafeAsync(() => _fanService.SetFanSpeedAsync(value));
         }
     }
 
@@ -305,22 +401,17 @@ public partial class MainViewModel : ObservableObject
 
     // ==================== 自然风控制 ====================
 
-    /// <summary>
-    /// ToggleSwitch 切换自然风
-    /// </summary>
     [RelayCommand]
     private async Task ToggleNatureWindAsync()
     {
         try
         {
             ClearError();
-            // ToggleSwitch 已经通过绑定修改了 NatureWindEnabled
             NatureWindButtonText = NatureWindEnabled ? "自然风 ON" : "自然风 OFF";
             await _fanService.SetNatureWindAsync(NatureWindEnabled);
         }
         catch (Exception ex)
         {
-            // 回滚状态
             NatureWindEnabled = !NatureWindEnabled;
             NatureWindButtonText = NatureWindEnabled ? "自然风 ON" : "自然风 OFF";
             ShowError($"切换自然风失败: {ex.Message}");
@@ -500,5 +591,17 @@ public partial class MainViewModel : ObservableObject
     {
         HasError = false;
         ErrorMessage = string.Empty;
+    }
+
+    private async Task SafeAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => ShowError(ex.Message));
+        }
     }
 }

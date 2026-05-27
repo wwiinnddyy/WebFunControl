@@ -1,11 +1,44 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:WebFunControl.ViewModels"
+             xmlns:v="using:WebFunControl.Views"
              x:Class="WebFunControl.Views.MainView"
              x:DataType="vm:MainViewModel">
 
-    <ScrollViewer>
-        <StackPanel Margin="16" Spacing="4" x:Name="RootPanel" />
-    </ScrollViewer>
+    <Grid RowDefinitions="*,Auto">
+        <!-- 页面内容 -->
+        <Grid x:Name="ContentGrid" Grid.Row="0" />
+
+        <!-- 底部 Tab 栏 -->
+        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+            <Grid ColumnDefinitions="*,*,*" Height="52">
+                <!-- 首页 -->
+                <Button x:Name="TabHome" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Click="OnTabClick" Tag="Home" Padding="0">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="1">
+                        <TextBlock Text="&#xE80F;" FontFamily="{DynamicResource SymbolThemeFontFamily}" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock Text="首页" FontSize="10" HorizontalAlignment="Center" x:Name="TabHomeLabel" />
+                    </StackPanel>
+                </Button>
+                <!-- 高级 -->
+                <Button x:Name="TabAdvanced" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Click="OnTabClick" Tag="Advanced" Padding="0">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="1">
+                        <TextBlock Text="&#xE713;" FontFamily="{DynamicResource SymbolThemeFontFamily}" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock Text="高级" FontSize="10" HorizontalAlignment="Center" x:Name="TabAdvancedLabel" />
+                    </StackPanel>
+                </Button>
+                <!-- 关于 -->
+                <Button x:Name="TabAbout" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        Background="Transparent" BorderThickness="0" Click="OnTabClick" Tag="About" Padding="0">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="1">
+                        <TextBlock Text="&#xE946;" FontFamily="{DynamicResource SymbolThemeFontFamily}" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock Text="关于" FontSize="10" HorizontalAlignment="Center" x:Name="TabAboutLabel" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
 
 </UserControl>

@@ -6,10 +6,53 @@
                 x:Class="WebFunControl.Views.MainWindow"
                 x:DataType="vm:MainViewModel"
                 Title="WebFunControl - W66D 风扇控制"
-                Width="520" Height="900"
-                MinWidth="400" MinHeight="700"
+                Width="900" Height="700"
+                MinWidth="600" MinHeight="500"
                 WindowStartupLocation="CenterScreen">
 
-    <v:MainView />
+    <Grid ColumnDefinitions="220,*">
+        <!-- 左侧常驻导航栏 -->
+        <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                BorderThickness="0,0,1,0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+            <StackPanel Margin="0,16,0,0" Spacing="2">
+                <!-- 应用标题 -->
+                <TextBlock Text="WebFunControl" FontSize="16" FontWeight="SemiBold"
+                           Margin="20,0,20,16" Opacity="0.9" />
+
+                <!-- 导航项 -->
+                <ListBox x:Name="NavList" SelectionMode="Single" SelectionChanged="OnNavSelectionChanged"
+                         Background="Transparent" BorderThickness="0" Padding="8,0">
+                    <ListBoxItem x:Name="NavHome" Tag="Home" Padding="12,10" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="&#xE80F;" FontFamily="{DynamicResource SymbolThemeFontFamily}" FontSize="16" VerticalAlignment="Center" Opacity="0.8" />
+                            <TextBlock Text="首页" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="NavAdvanced" Tag="Advanced" Padding="12,10" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="&#xE713;" FontFamily="{DynamicResource SymbolThemeFontFamily}" FontSize="16" VerticalAlignment="Center" Opacity="0.8" />
+                            <TextBlock Text="高级" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="NavAbout" Tag="About" Padding="12,10" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="&#xE946;" FontFamily="{DynamicResource SymbolThemeFontFamily}" FontSize="16" VerticalAlignment="Center" Opacity="0.8" />
+                            <TextBlock Text="关于" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+
+                <!-- 底部连接状态 -->
+                <StackPanel VerticalAlignment="Bottom" Margin="20,0,20,16" Spacing="4">
+                    <Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,0,0,8" />
+                    <Ellipse x:Name="StatusDot" Width="8" Height="8" HorizontalAlignment="Left" Margin="0,0,0,4" />
+                    <TextBlock x:Name="StatusText" FontSize="12" Opacity="0.7" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 右侧内容区域 -->
+        <Grid x:Name="ContentGrid" Grid.Column="1" />
+    </Grid>
 
 </fw:FAAppWindow>
